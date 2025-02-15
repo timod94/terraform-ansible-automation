@@ -1,0 +1,20 @@
+---
+- name: Ping remote servers and add to known_hosts
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Get SSH host key for the server
+      command: ssh-keyscan -H {{ inventory_hostname }}
+      register: ssh_key
+      delegate_to: localhost
+      changed_when: false
+
+    - name: Add host to known_hosts
+      ansible.builtin.known_hosts:
+        name: "{{ inventory_hostname }}"
+        key: "{{ ssh_key.stdout }}"
+        path: "{{ lookup('env', 'HOME') }}/.ssh/known_hosts"
+      delegate_to: localhost
+
+    - name: Ping server
+      ping:
